@@ -71,7 +71,7 @@ Copilots are differentiated by user profile: external requesters see only their 
 
 ## The BSO Connection — Research Meets Platform
 
-> *This is the thread that connects this repository to the [Research Track](https://github.com/YOUR_USERNAME) of this portfolio.*
+> *This is the thread that connects this repository to the [Research Track](https://github.com/rjvvitorino-web) of this portfolio.*
 
 The BSO Knowledge Graph embedded in Layer 6 is not a generic AI feature — it is the direct operational application of the **Balanced Scorecard Ontology** methodology implemented as the centrepiece of the MSc thesis in Public Administration Digitalisation (ISCTE-IUL, 2024).
 
@@ -135,5 +135,5 @@ Full design documentation, data model specifications, and implementation materia
 
 If this architecture is relevant to work you're doing — whether in government digital transformation, Power Platform implementation, or AI/semantic web integration — I'd welcome the conversation.
 
-**[Connect on LinkedIn →](https://www.linkedin.com/in/YOUR_LINKEDIN)**
+**[Connect on LinkedIn →](https://www.linkedin.com/in/rui-jv-vitorino)**
 

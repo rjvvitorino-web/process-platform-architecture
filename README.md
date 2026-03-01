@@ -33,7 +33,7 @@ The agency coordinates financial and budgetary processes involving **117+ extern
 
 The platform is structured in six functional layers, each with clearly defined responsibilities and technology choices. The guiding principle throughout is **separation of concerns**: every layer is autonomous and communicates with adjacent layers through well-defined interfaces.
 
-→ **[View the interactive architecture diagram](architecture/platform-diagram.html)**
+→ **[View the interactive architecture diagram](https://rjvvitorino-web.github.io/process-platform-architecture/architecture/platform-diagram.html)**
 
 ### Layer 1 — External Staging (SharePoint Online)
 For processes involving users from external entities, a dedicated SharePoint Online site serves as the entry point. Forms are built using the native *Customize with Power Apps* capability directly on SharePoint lists — a specific approach that allows external guest users (provisioned via Entra ID B2B) to submit and track requests **without requiring individual Power Apps licences**. This is the platform's most significant cost decision. See [Architecture Notes](docs/architecture-notes.md#licensing-architecture) for the full rationale.

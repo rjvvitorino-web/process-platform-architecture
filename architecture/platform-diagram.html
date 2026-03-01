@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSGFO Process Platform — Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 { font-size: 24px; font-weight: 800; color: #f8fafc; margin-bottom: 4px; text-align: center; letter-spacing: -0.5px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 12px; text-align: center; max-width: 700px; }
+  .version-badge { font-size: 11px; font-weight: 600; color: #a5b4fc; background: #1e1b4b; border: 1px solid #4338ca; padding: 4px 14px; border-radius: 20px; margin-bottom: 32px; }
+
+  .diagram { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 1020px; width: 100%; }
+
+  /* LAYER */
+  .layer { width: 100%; border-radius: 16px; padding: 24px; position: relative; }
+  .layer-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .layer-icon { font-size: 20px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; flex-shrink: 0; }
+  .layer-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .layer-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+
+  .layer-external { background: linear-gradient(135deg, #022c22, #064e3b); border: 1px solid #065f46; }
+  .layer-external .layer-icon { background: #065f46; } .layer-external .layer-title { color: #6ee7b7; } .layer-external .layer-badge { background: #065f46; color: #6ee7b7; }
+
+  .layer-internal { background: linear-gradient(135deg, #172554, #1e3a5f); border: 1px solid #1d4ed8; }
+  .layer-internal .layer-icon { background: #1e40af; } .layer-internal .layer-title { color: #93c5fd; } .layer-internal .layer-badge { background: #1e3a8a; color: #93c5fd; }
+
+  .layer-api { background: linear-gradient(135deg, #1a1a2e, #0f2027); border: 1px solid #0ea5e9; }
+  .layer-api .layer-icon { background: #0369a1; } .layer-api .layer-title { color: #7dd3fc; } .layer-api .layer-badge { background: #0c4a6e; color: #7dd3fc; }
+
+  .layer-fabric { background: linear-gradient(135deg, #3b0764, #581c87); border: 1px solid #7e22ce; }
+  .layer-fabric .layer-icon { background: #7e22ce; } .layer-fabric .layer-title { color: #d8b4fe; } .layer-fabric .layer-badge { background: #581c87; color: #d8b4fe; }
+
+  .layer-ai { background: linear-gradient(135deg, #78350f, #92400e); border: 1px solid #d97706; }
+  .layer-ai .layer-icon { background: #b45309; } .layer-ai .layer-title { color: #fde68a; } .layer-ai .layer-badge { background: #78350f; color: #fde68a; }
+
+  .layer-sync { background: linear-gradient(135deg, #1e1b4b, #312e81); border: 1px solid #4338ca; border-radius: 12px; padding: 18px 24px; }
+  .layer-sync .layer-icon { background: #4338ca; } .layer-sync .layer-title { color: #a5b4fc; }
+
+  /* COMPONENTS */
+  .components { display: flex; gap: 12px; flex-wrap: wrap; }
+  .component { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 16px; flex: 1; min-width: 180px; }
+  .component-name { font-size: 13px; font-weight: 600; color: #f1f5f9; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tech { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #94a3b8; }
+  .component-desc { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .component-highlight { border-color: rgba(110,231,183,0.3); background: rgba(110,231,183,0.05); }
+  .component-core { border-color: rgba(147,197,253,0.3); background: rgba(59,130,246,0.08); }
+  .component-api { border-color: rgba(125,211,252,0.3); background: rgba(14,165,233,0.08); }
+  .component-fabric { border-color: rgba(216,180,254,0.3); background: rgba(126,34,206,0.08); }
+
+  /* PROCESS CHIPS */
+  .process-section { width: 100%; margin-bottom: 10px; }
+  .schema-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .process-rows { display: flex; gap: 14px; flex-wrap: wrap; }
+  .process-column { flex: 1; min-width: 280px; }
+  .process-column-title { font-size: 11px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .pct-external { color: #6ee7b7; }
+  .pct-internal { color: #93c5fd; }
+  .process-chips { display: flex; flex-direction: column; gap: 6px; }
+  .process-chip { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; font-size: 12px; font-weight: 500; border: 1px solid; }
+  .process-chip-active { background: rgba(110,231,183,0.08); border-color: rgba(110,231,183,0.25); color: #d1fae5; }
+  .process-chip-planned { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #cbd5e1; }
+  .process-chip-future { background: rgba(251,191,36,0.05); border-color: rgba(251,191,36,0.18); color: #fef3c7; border-style: dashed; }
+  .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .chip-dot-active { background: #10b981; }
+  .chip-dot-planned { background: #64748b; }
+  .chip-dot-future { background: #f59e0b; }
+  .chip-path { font-size: 10px; color: #64748b; margin-left: auto; font-weight: 400; }
+
+  /* DUAL INPUT */
+  .dual-input { display: flex; gap: 14px; width: 100%; flex-wrap: wrap; }
+  .dual-input > .layer { flex: 1; min-width: 300px; }
+
+  /* ARROWS */
+  .arrow-connector { display: flex; flex-direction: column; align-items: center; padding: 6px 0; z-index: 2; }
+  .arrow-line { width: 2px; height: 14px; }
+  .arrow-line-down { width: 2px; height: 14px; }
+  .arrow-label { font-size: 10px; font-weight: 600; padding: 4px 14px; border-radius: 20px; white-space: nowrap; }
+  .al-sync { color: #a5b4fc; background: #1e1b4b; border: 1px solid #4338ca; }
+  .al-fabric { color: #d8b4fe; background: #3b0764; border: 1px solid #7e22ce; }
+  .al-ai { color: #fde68a; background: #78350f; border: 1px solid #d97706; }
+  .al-api { color: #7dd3fc; background: #0c4a6e; border: 1px solid #0ea5e9; }
+  .arl-indigo { background: linear-gradient(180deg, transparent, #6366f1); }
+  .ard-indigo { background: linear-gradient(180deg, #6366f1, transparent); }
+  .arl-purple { background: linear-gradient(180deg, transparent, #7e22ce); }
+  .ard-purple { background: linear-gradient(180deg, #7e22ce, transparent); }
+  .arl-amber { background: linear-gradient(180deg, transparent, #d97706); }
+  .ard-amber { background: linear-gradient(180deg, #d97706, transparent); }
+  .arl-cyan { background: linear-gradient(180deg, transparent, #0ea5e9); }
+  .ard-cyan { background: linear-gradient(180deg, #0ea5e9, transparent); }
+
+  /* SCHEMA */
+  .schema-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 12px; }
+  .schema-table { background: rgba(0,0,0,0.25); border: 1px solid rgba(147,197,253,0.15); border-radius: 10px; overflow: hidden; }
+  .schema-table-header { background: rgba(59,130,246,0.12); padding: 8px 12px; font-size: 12px; font-weight: 700; color: #93c5fd; display: flex; align-items: center; gap: 6px; }
+  .schema-fields { padding: 8px 12px; }
+  .schema-field { font-size: 10px; color: #64748b; padding: 2px 0; display: flex; align-items: center; gap: 4px; }
+  .schema-field .pk { color: #fbbf24; font-weight: 700; font-size: 9px; }
+  .schema-field .fk { color: #a78bfa; font-weight: 700; font-size: 9px; }
+  .schema-field .field-name { color: #cbd5e1; }
+
+  /* USERS */
+  .users-row { display: flex; gap: 10px; width: 100%; margin-bottom: 10px; flex-wrap: wrap; }
+  .user-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 130px; }
+  .user-emoji { font-size: 18px; }
+  .user-info { display: flex; flex-direction: column; }
+  .user-label { font-size: 12px; font-weight: 600; color: #f1f5f9; }
+  .user-detail { font-size: 10px; color: #64748b; }
+  .user-cost { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
+  .cost-free { background: #065f46; color: #6ee7b7; }
+  .cost-included { background: #1e3a8a; color: #93c5fd; }
+
+  /* API ENDPOINTS */
+  .api-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .api-endpoint { background: rgba(0,0,0,0.25); border: 1px solid rgba(125,211,252,0.2); border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 200px; }
+  .api-method { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 6px; }
+  .method-rest { background: rgba(14,165,233,0.2); color: #7dd3fc; }
+  .method-webhook { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+  .method-odata { background: rgba(251,191,36,0.2); color: #fde68a; }
+  .api-path { font-size: 11px; font-weight: 600; color: #e2e8f0; font-family: 'Courier New', monospace; }
+  .api-desc { font-size: 10px; color: #64748b; margin-top: 4px; }
+  .api-systems { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .system-tag { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); }
+
+  /* CHATBOT */
+  .chatbot-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .chatbot-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(253,230,138,0.2); border-radius: 12px; padding: 14px 16px; flex: 1; min-width: 200px; }
+  .chatbot-persona { font-size: 12px; font-weight: 700; color: #fde68a; margin-bottom: 6px; }
+  .chatbot-example { font-size: 11px; color: #d4d4d8; font-style: italic; line-height: 1.5; padding: 6px 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 6px; border-left: 2px solid rgba(253,230,138,0.3); }
+  .chatbot-sources { margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .source-tag { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .source-dv { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .source-fabric { background: rgba(126,34,206,0.2); color: #d8b4fe; }
+  .source-bso { background: rgba(217,119,6,0.2); color: #fde68a; }
+  .source-api { background: rgba(14,165,233,0.2); color: #7dd3fc; }
+
+  /* INSIGHTS */
+  .insights-row { width: 100%; max-width: 1020px; display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .insight-box { flex: 1; min-width: 200px; background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #334155; border-radius: 12px; padding: 16px 20px; }
+  .insight-box-green { border-left: 4px solid #10b981; }
+  .insight-box-blue { border-left: 4px solid #3b82f6; }
+  .insight-box-cyan { border-left: 4px solid #0ea5e9; }
+  .insight-box-amber { border-left: 4px solid #f59e0b; }
+  .insight-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .insight-title-green { color: #6ee7b7; }
+  .insight-title-blue { color: #93c5fd; }
+  .insight-title-cyan { color: #7dd3fc; }
+  .insight-title-amber { color: #fbbf24; }
+  .insight-text { font-size: 12px; color: #cbd5e1; line-height: 1.6; }
+  .insight-text strong { color: #f8fafc; }
+
+  /* LEGEND */
+  .legend { margin-top: 20px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748b; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>DSGFO Process Platform</h1>
+<p class="subtitle">Generic multi-process architecture with interoperability · External processes via SP Staging · Internal processes directly via Power Apps</p>
+<div class="version-badge">SGGov · DSGFO · February 2026</div>
+
+<div class="diagram">
+
+  <!-- PROCESS INSTANCES -->
+  <div class="process-section">
+    <div class="schema-label">Process instances — differentiated entry paths</div>
+    <div class="process-rows">
+      <div class="process-column">
+        <div class="process-column-title pct-external">🌐 Processes with external users (SP Staging → Dataverse)</div>
+        <div class="process-chips">
+          <div class="process-chip process-chip-active">
+            <div class="chip-dot chip-dot-active"></div>
+            Budget Alteration Requests (DCPO)
+            <span class="chip-path">SP → DV</span>
+          </div>
+          <div class="process-chip process-chip-future">
+            <div class="chip-dot chip-dot-future"></div>
+            External Process N (future)
+            <span class="chip-path">SP → DV</span>
+          </div>
+        </div>
+      </div>
+      <div class="process-column">
+        <div class="process-column-title pct-internal">⚙️ Internal processes (directly via Power Apps + Dataverse)</div>
+        <div class="process-chips">
+          <div class="process-chip process-chip-planned">
+            <div class="chip-dot chip-dot-planned"></div>
+            Petty Cash Management (DSF)
+            <span class="chip-path">App → DV</span>
+          </div>
+          <div class="process-chip process-chip-planned">
+            <div class="chip-dot chip-dot-planned"></div>
+            Card Forms (DCFR)
+            <span class="chip-path">App → DV</span>
+          </div>
+          <div class="process-chip process-chip-future">
+            <div class="chip-dot chip-dot-future"></div>
+            Internal Process N (future)
+            <span class="chip-path">App → DV</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUAL INPUT: SP STAGING + DIRECT APP -->
+  <div class="dual-input">
+
+    <!-- LEFT: SP STAGING (External) -->
+    <div class="layer layer-external">
+      <div class="layer-header">
+        <div class="layer-icon">🌐</div>
+        <span class="layer-title">External Entry — SP Staging</span>
+        <span class="layer-badge">€0 licensing</span>
+      </div>
+      <div class="users-row">
+        <div class="user-group">
+          <span class="user-emoji">🏛️</span>
+          <div class="user-info">
+            <span class="user-label">External Entities</span>
+            <span class="user-detail">Entra ID B2B Guest</span>
+          </div>
+          <span class="user-cost cost-free">€0</span>
+        </div>
+      </div>
+      <div class="components">
+        <div class="component component-highlight">
+          <div class="component-name">SP List + Custom Form <span class="tech">SP Online</span></div>
+          <div class="component-desc">Embedded form (standard connectors). One SP site per external process. Status lookup via filtered views.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: DIRECT APP (Internal) -->
+    <div class="layer layer-internal" style="border-style: solid;">
+      <div class="layer-header">
+        <div class="layer-icon">📱</div>
+        <span class="layer-title">Internal Entry — Power Apps</span>
+        <span class="layer-badge">M365 (included)</span>
+      </div>
+      <div class="users-row">
+        <div class="user-group">
+          <span class="user-emoji">👤</span>
+          <div class="user-info">
+            <span class="user-label">Internal Users</span>
+            <span class="user-detail">DSF, DCFR, other divisions</span>
+          </div>
+          <span class="user-cost cost-included">M365</span>
+        </div>
+      </div>
+      <div class="components">
+        <div class="component component-core">
+          <div class="component-name">Canvas / Model-Driven <span class="tech">Power Apps</span></div>
+          <div class="component-desc">Direct Dataverse access. Canvas for rich UX, Model-Driven for standard processes. No staging needed.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ARROW: converge to Dataverse -->
+  <div class="arrow-connector">
+    <div class="arrow-line arl-indigo"></div>
+    <div class="arrow-label al-sync">⚡ Power Automate (SP↔DV sync for externals) · Direct DV write for internals</div>
+    <div class="arrow-line-down ard-indigo"></div>
+  </div>
+
+  <!-- LAYER: CORE TRANSACTIONAL -->
+  <div class="layer layer-internal">
+    <div class="layer-header">
+      <div class="layer-icon">⚙️</div>
+      <span class="layer-title">Transactional Core — Dataverse</span>
+      <span class="layer-badge">Single Source of Truth</span>
+    </div>
+
+    <div class="users-row">
+      <div class="user-group">
+        <span class="user-emoji">👔</span>
+        <div class="user-info"><span class="user-label">Managers</span><span class="user-detail">Distribution & decisions</span></div>
+        <span class="user-cost cost-included">M365</span>
+      </div>
+      <div class="user-group">
+        <span class="user-emoji">🔬</span>
+        <div class="user-info"><span class="user-label">Analysts</span><span class="user-detail">Analysis & opinions</span></div>
+        <span class="user-cost cost-included">M365</span>
+      </div>
+      <div class="user-group">
+        <span class="user-emoji">🛠️</span>
+        <div class="user-info"><span class="user-label">Admin</span><span class="user-detail">Configuration</span></div>
+        <span class="user-cost cost-included">M365</span>
+      </div>
+    </div>
+
+    <div class="components">
+      <div class="component component-core">
+        <div class="component-name">Dataverse <span class="tech">Generic multi-process model</span></div>
+        <div class="component-desc">Shared core tables + type-specific extensions. Business Rules, division-level RLS, auditing, versioning.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">Power Apps <span class="tech">Operational</span></div>
+        <div class="component-desc">Unified multi-process app or dedicated per-division apps. Canvas for UX, Model-Driven for management.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">Power Automate <span class="tech">Parametrized flows</span></div>
+        <div class="component-desc">Approvals, SLAs, escalation, doc generation, notifications. Reusable across process types.</div>
+      </div>
+    </div>
+
+    <!-- SCHEMA -->
+    <div style="margin-top: 16px;">
+      <div class="schema-label">Data model (core + extensible tables)</div>
+      <div class="schema-grid">
+        <div class="schema-table">
+          <div class="schema-table-header"><span>📋</span> dsgfo_Process</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">ProcessID</span></div>
+            <div class="schema-field"><span class="fk">FK</span> <span class="field-name">ProcessTypeID</span></div>
+            <div class="schema-field"><span class="fk">FK</span> <span class="field-name">EntityID</span></div>
+            <div class="schema-field"><span class="field-name">Subject, Status, Priority</span></div>
+            <div class="schema-field"><span class="fk">FK</span> <span class="field-name">AnalystID, ManagerID</span></div>
+            <div class="schema-field"><span class="field-name">ExternalOrigin (Yes/No)</span></div>
+          </div>
+        </div>
+        <div class="schema-table">
+          <div class="schema-table-header"><span>⚙️</span> dsgfo_ProcessType</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">ProcessTypeID</span></div>
+            <div class="schema-field"><span class="field-name">Name, ResponsibleDivision</span></div>
+            <div class="schema-field"><span class="field-name">SLA_Days, ApprovalFlow</span></div>
+            <div class="schema-field"><span class="field-name">HasExternalUsers (Yes/No)</span></div>
+            <div class="schema-field"><span class="field-name">SPSiteUrl (optional)</span></div>
+            <div class="schema-field"><span class="field-name">RequiredFields (JSON)</span></div>
+          </div>
+        </div>
+        <div class="schema-table">
+          <div class="schema-table-header"><span>🏛️</span> dsgfo_Entity</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">EntityID</span></div>
+            <div class="schema-field"><span class="field-name">Name, Acronym, Budget Program</span></div>
+            <div class="schema-field"><span class="field-name">Contacts, Oversight</span></div>
+            <div class="schema-field"><span class="field-name">Type (Internal/External)</span></div>
+          </div>
+        </div>
+        <div class="schema-table">
+          <div class="schema-table-header"><span>🔌</span> dsgfo_ExternalSystem</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">SystemID</span></div>
+            <div class="schema-field"><span class="field-name">Name (GeRFiP, GA, BIORC, SmartBP)</span></div>
+            <div class="schema-field"><span class="field-name">APIEndpoint, AuthType</span></div>
+            <div class="schema-field"><span class="field-name">Active, LastSync</span></div>
+            <div class="schema-field"><span class="field-name">Field mapping</span></div>
+          </div>
+        </div>
+        <div class="schema-table">
+          <div class="schema-table-header"><span>📜</span> dsgfo_AuditLog</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">ActionID</span></div>
+            <div class="schema-field"><span class="fk">FK</span> <span class="field-name">ProcessID</span></div>
+            <div class="schema-field"><span class="field-name">Action, Author, DateTime</span></div>
+            <div class="schema-field"><span class="field-name">PreviousStatus → NewStatus</span></div>
+            <div class="schema-field"><span class="field-name">Origin (App/API/SP)</span></div>
+          </div>
+        </div>
+        <div class="schema-table">
+          <div class="schema-table-header"><span>📎</span> dsgfo_Document</div>
+          <div class="schema-fields">
+            <div class="schema-field"><span class="pk">PK</span> <span class="field-name">DocumentID</span></div>
+            <div class="schema-field"><span class="fk">FK</span> <span class="field-name">ProcessID</span></div>
+            <div class="schema-field"><span class="field-name">Type, SPUrl, Version</span></div>
+            <div class="schema-field"><span class="field-name">RAGIndexed (Yes/No)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW: Dataverse → API + Fabric -->
+  <div class="arrow-connector">
+    <div class="arrow-line arl-cyan"></div>
+    <div class="arrow-label al-api">🔌 Dataverse Web API (OData) + Azure API Management</div>
+    <div class="arrow-line-down ard-cyan"></div>
+  </div>
+
+  <!-- LAYER: API / INTEROPERABILITY -->
+  <div class="layer layer-api">
+    <div class="layer-header">
+      <div class="layer-icon">🔌</div>
+      <span class="layer-title">Interoperability Layer — APIs</span>
+      <span class="layer-badge">Azure APIM + Custom Connectors</span>
+    </div>
+
+    <div class="components" style="margin-bottom: 14px;">
+      <div class="component component-api">
+        <div class="component-name">Azure API Management <span class="tech">Gateway</span></div>
+        <div class="component-desc">Central gateway: authentication (OAuth2/API Key), rate limiting, logging, versioning. Single entry point for external systems.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">Dataverse Web API <span class="tech">OData v4</span></div>
+        <div class="component-desc">Native REST/OData Dataverse API. Full CRUD, queries, batch operations. Security by Business Unit.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">Custom Connectors <span class="tech">Power Platform</span></div>
+        <div class="component-desc">Connectors for external systems. Power Automate calls external APIs and receives webhooks from third-party systems.</div>
+      </div>
+    </div>
+
+    <div class="schema-label">Endpoints and integrations</div>
+    <div class="api-grid">
+      <div class="api-endpoint">
+        <div><span class="api-method method-rest">REST</span><span class="api-path">/api/v1/processes</span></div>
+        <div class="api-desc">Process CRUD. External systems create/query requests via API.</div>
+        <div class="api-systems">
+          <span class="system-tag">GeRFiP</span>
+          <span class="system-tag">GA (Oracle APEX)</span>
+          <span class="system-tag">BIORC</span>
+        </div>
+      </div>
+      <div class="api-endpoint">
+        <div><span class="api-method method-webhook">WEBHOOK</span><span class="api-path">/api/v1/events</span></div>
+        <div class="api-desc">Event notifications (status change, decisions). Push to subscribed systems.</div>
+        <div class="api-systems">
+          <span class="system-tag">SmartBP</span>
+          <span class="system-tag">Gov Email</span>
+          <span class="system-tag">Teams</span>
+        </div>
+      </div>
+      <div class="api-endpoint">
+        <div><span class="api-method method-odata">OData</span><span class="api-path">/api/data/v9.2/dsgfo_processes</span></div>
+        <div class="api-desc">Direct Dataverse access (authenticated). Advanced queries, $expand, $filter, batch.</div>
+        <div class="api-systems">
+          <span class="system-tag">Power BI</span>
+          <span class="system-tag">Azure Functions</span>
+          <span class="system-tag">Python/R</span>
+        </div>
+      </div>
+      <div class="api-endpoint">
+        <div><span class="api-method method-rest">REST</span><span class="api-path">/api/v1/documents</span></div>
+        <div class="api-desc">Document upload/download. Integration with external document management systems.</div>
+        <div class="api-systems">
+          <span class="system-tag">SmartBP</span>
+          <span class="system-tag">Archive</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW: API → Fabric -->
+  <div class="arrow-connector">
+    <div class="arrow-line arl-purple"></div>
+    <div class="arrow-label al-fabric">🔗 Dataverse Link to Fabric + API data ingestion → OneLake</div>
+    <div class="arrow-line-down ard-purple"></div>
+  </div>
+
+  <!-- LAYER: FABRIC / ANALYTICS -->
+  <div class="layer layer-fabric">
+    <div class="layer-header">
+      <div class="layer-icon">📊</div>
+      <span class="layer-title">Analytics Layer — Fabric / OneLake</span>
+      <span class="layer-badge">Fabric + Power BI</span>
+    </div>
+
+    <div class="components">
+      <div class="component component-fabric">
+        <div class="component-name">OneLake / Lakehouse <span class="tech">Fabric</span></div>
+        <div class="component-desc">All processes + external API data consolidated. Direct Lake for fast queries. Cross-referencing with GeRFiP, GA, BIORC, budget execution.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">Multi-Process Power BI <span class="tech">Dashboards</span></div>
+        <div class="component-desc">Cross-cutting view: volumes, SLAs, values by division, process type, budget program. Drill-down by entity, analyst.</div>
+      </div>
+    </div>
+    <div class="components" style="margin-top: 12px;">
+      <div class="component">
+        <div class="component-name">Indexed Documents <span class="tech">OneLake Files</span></div>
+        <div class="component-desc">Official dispatches, letters, opinions indexed for RAG. Chunking + embeddings for semantic search.</div>
+      </div>
+      <div class="component">
+        <div class="component-name">BSO Knowledge Graph <span class="tech">Ontology</span></div>
+        <div class="component-desc">LLM→Ontology pipeline. Execution vs. strategy alignment. SPARQL/API.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW: Fabric → AI -->
+  <div class="arrow-connector">
+    <div class="arrow-line arl-amber"></div>
+    <div class="arrow-label al-ai">🧠 Grounding: Dataverse (real-time) + OneLake (historical) + BSO (semantic)</div>
+    <div class="arrow-line-down ard-amber"></div>
+  </div>
+
+  <!-- LAYER: AI / RAG -->
+  <div class="layer layer-ai">
+    <div class="layer-header">
+      <div class="layer-icon">🤖</div>
+      <span class="layer-title">AI Layer — RAG / Copilots</span>
+      <span class="layer-badge">Copilot Studio + Azure OpenAI</span>
+    </div>
+
+    <div class="chatbot-grid">
+      <div class="chatbot-card">
+        <div class="chatbot-persona">🏛️ Requester Copilot</div>
+        <div class="component-desc">Multi-process. Status queries, submission guidance, requirement clarification.</div>
+        <div class="chatbot-example">"What documents do I need for a budget transfer?"</div>
+        <div class="chatbot-sources">
+          <span class="source-tag source-dv">Dataverse</span>
+        </div>
+      </div>
+      <div class="chatbot-card">
+        <div class="chatbot-persona">🔬 Analyst Copilot</div>
+        <div class="component-desc">Cross-process precedent search. Suggests rationale based on historical data.</div>
+        <div class="chatbot-example">"Previous opinions on Health budget program alterations"</div>
+        <div class="chatbot-sources">
+          <span class="source-tag source-dv">Dataverse</span>
+          <span class="source-tag source-fabric">OneLake</span>
+        </div>
+      </div>
+      <div class="chatbot-card">
+        <div class="chatbot-persona">👔 Management Copilot</div>
+        <div class="component-desc">Strategic view. KPIs, deviations, BSO alignment. External API data included.</div>
+        <div class="chatbot-example">"Execution deviation vs strategic objective by budget program"</div>
+        <div class="chatbot-sources">
+          <span class="source-tag source-fabric">OneLake</span>
+          <span class="source-tag source-bso">BSO</span>
+          <span class="source-tag source-api">External APIs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CROSS-CUTTING: ENVIRONMENTS + FINOPS -->
+<div style="width: 100%; max-width: 1020px; display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap;">
+
+  <!-- ENVIRONMENTS -->
+  <div style="flex: 1; min-width: 300px; background: linear-gradient(135deg, #1a1a2e, #1e293b); border: 1px solid #475569; border-radius: 16px; padding: 24px;">
+    <div class="layer-header">
+      <div class="layer-icon" style="background: #475569;">🔀</div>
+      <span class="layer-title" style="color: #94a3b8;">Environment Strategy</span>
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+      <div style="flex: 1; min-width: 130px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); border-radius: 10px; padding: 12px 14px; text-align: center;">
+        <div style="font-size: 18px; margin-bottom: 4px;">🛠️</div>
+        <div style="font-size: 13px; font-weight: 700; color: #fde68a;">DEV</div>
+        <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Development</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Fictitious data</div>
+      </div>
+      <div style="display: flex; align-items: center; color: #475569; font-size: 18px; font-weight: 700;">→</div>
+      <div style="flex: 1; min-width: 130px; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.25); border-radius: 10px; padding: 12px 14px; text-align: center;">
+        <div style="font-size: 18px; margin-bottom: 4px;">🧪</div>
+        <div style="font-size: 13px; font-weight: 700; color: #7dd3fc;">TEST</div>
+        <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Validation / QA</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Anonymized data</div>
+      </div>
+      <div style="display: flex; align-items: center; color: #475569; font-size: 18px; font-weight: 700;">→</div>
+      <div style="flex: 1; min-width: 130px; background: rgba(110,231,183,0.08); border: 1px solid rgba(110,231,183,0.25); border-radius: 10px; padding: 12px 14px; text-align: center;">
+        <div style="font-size: 18px; margin-bottom: 4px;">🚀</div>
+        <div style="font-size: 13px; font-weight: 700; color: #6ee7b7;">PROD</div>
+        <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Production</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Real data</div>
+      </div>
+    </div>
+
+    <div class="component-desc" style="text-align: center; font-size: 11px;">
+      Managed Solutions promoted unidirectionally · Semantic versioning<br>
+      Each environment with independent Dataverse, Power Apps, Flows, SP and APIM
+    </div>
+  </div>
+
+  <!-- FINOPS -->
+  <div style="flex: 1; min-width: 300px; background: linear-gradient(135deg, #1a1a2e, #1e293b); border: 1px solid #475569; border-radius: 16px; padding: 24px;">
+    <div class="layer-header">
+      <div class="layer-icon" style="background: #0d9488;">💰</div>
+      <span class="layer-title" style="color: #5eead4;">FinOps — Cloud Financial Governance</span>
+    </div>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+      <div style="flex: 1; min-width: 120px; background: rgba(94,234,212,0.06); border: 1px solid rgba(94,234,212,0.15); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 11px; font-weight: 700; color: #5eead4; margin-bottom: 4px;">👁️ Visibility</div>
+        <div style="font-size: 10px; color: #94a3b8;">Costs by component, division, and process. Dedicated dashboard.</div>
+      </div>
+      <div style="flex: 1; min-width: 120px; background: rgba(94,234,212,0.06); border: 1px solid rgba(94,234,212,0.15); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 11px; font-weight: 700; color: #5eead4; margin-bottom: 4px;">📊 Monitoring</div>
+        <div style="font-size: 10px; color: #94a3b8;">Deviation alerts, quarterly review, tags by environment.</div>
+      </div>
+      <div style="flex: 1; min-width: 120px; background: rgba(94,234,212,0.06); border: 1px solid rgba(94,234,212,0.15); border-radius: 8px; padding: 10px;">
+        <div style="font-size: 11px; font-weight: 700; color: #5eead4; margin-bottom: 4px;">⚡ Optimization</div>
+        <div style="font-size: 10px; color: #94a3b8;">Fabric pausable, DV→OneLake archiving, DEV/TEST shutdownable.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">Dataverse (GB)</div>
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">Fabric (CU)</div>
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">APIM (calls)</div>
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">Copilot (msgs)</div>
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">Azure OpenAI (tokens)</div>
+      <div style="font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(94,234,212,0.1); color: #5eead4; border: 1px solid rgba(94,234,212,0.2);">Power Automate (runs)</div>
+    </div>
+
+    <div class="component-desc" style="text-align: center; font-size: 10px; margin-top: 10px;">
+      Public funds demand continuous optimization · Every euro justified
+    </div>
+  </div>
+
+</div>
+
+<!-- INSIGHTS -->
+<div class="insights-row">
+  <div class="insight-box insight-box-green">
+    <div class="insight-title insight-title-green">🔁 Dual entry paths</div>
+    <div class="insight-text">
+      <strong>External</strong> → SP staging (€0). <strong>Internal</strong> → Power Apps direct on Dataverse. The platform adapts to the user profile without duplicating infrastructure.
+    </div>
+  </div>
+  <div class="insight-box insight-box-cyan">
+    <div class="insight-title insight-title-cyan">🔌 API-first</div>
+    <div class="insight-text">
+      Azure APIM as central gateway. Interoperability with <strong>GeRFiP, GA (Oracle APEX), BIORC, SmartBP</strong> and any future system via REST/OData/Webhooks.
+    </div>
+  </div>
+  <div class="insight-box insight-box-blue">
+    <div class="insight-title insight-title-blue">📊 Cross-cutting analytics</div>
+    <div class="insight-text">
+      Fabric consolidates <strong>internal + external processes + API data</strong> in a single lakehouse. Power BI with 360° view of DSGFO.
+    </div>
+  </div>
+</div>
+<div class="insights-row" style="margin-top: 12px;">
+  <div class="insight-box insight-box-amber">
+    <div class="insight-title insight-title-amber">🧠 Enriched RAG</div>
+    <div class="insight-text">
+      Copilots grounded on <strong>4 sources</strong>: Dataverse (real-time) + OneLake (historical) + BSO (semantic) + External APIs (GeRFiP, GA, BIORC).
+    </div>
+  </div>
+  <div class="insight-box" style="border-left: 4px solid #475569;">
+    <div class="insight-title" style="color: #94a3b8;">🔀 Dev → Test → Prod</div>
+    <div class="insight-text">
+      Isolated environments with unidirectional managed solution promotion. No changes reach production without prior validation.
+    </div>
+  </div>
+  <div class="insight-box" style="border-left: 4px solid #0d9488;">
+    <div class="insight-title" style="color: #5eead4;">💰 FinOps</div>
+    <div class="insight-text">
+      Integrated cloud financial governance. Costs visible, monitored, and optimized by component. Public funds managed rigorously.
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Active</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#64748b;"></div> Planned</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Future</div>
+  <div class="legend-item" style="margin-left: 12px;"><div class="legend-dot" style="background:#065f46;"></div> SP Staging</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1e40af;"></div> Dataverse</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0369a1;"></div> APIs</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7e22ce;"></div> Fabric</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#b45309;"></div> AI/RAG</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#475569;"></div> Environments</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0d9488;"></div> FinOps</div>
+</div>
+
+</body>
+</html>
